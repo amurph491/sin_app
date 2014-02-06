@@ -1,0 +1,175 @@
+<meta http-equiv="refresh" content="">
+<link rel="stylesheet" href="/index.css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/highcharts-more.js"></script>
+
+<div id="container_dial" style="width:50%; height:400px;"></div>
+<div id="container_line" style="width:50%; height:400px;"></div>
+
+<script type="text/javascript"> 
+$(function () {
+	
+    $('#container_dial').highcharts({
+		
+	    chart: {
+	        type: 'gauge',
+	        plotBackgroundColor: null,
+	        plotBackgroundImage: null,
+	        plotBorderWidth: 0,
+	        plotShadow: false
+	    },
+	    
+	    title: {
+	        text: 'Suit Temperature'
+	    },
+	    
+	    pane: {
+	        startAngle: -150,
+	        endAngle: 150,
+	        background: [{
+	            backgroundColor: {
+	                linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+	                stops: [
+	                    [0, '#FFF'],
+	                    [1, '#333']
+	                ]
+	            },
+	            borderWidth: 0,
+	            outerRadius: '109%'
+	        }, {
+	            backgroundColor: {
+	                linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+	                stops: [
+	                    [0, '#333'],
+	                    [1, '#FFF']
+	                ]
+	            },
+	            borderWidth: 1,
+	            outerRadius: '107%'
+	        }, {
+	            // default background
+	        }, {
+	            backgroundColor: '#DDD',
+	            borderWidth: 0,
+	            outerRadius: '105%',
+	            innerRadius: '103%'
+	        }]
+	    },
+	       
+	    // the value axis
+	    yAxis: {
+	        min: 0,
+	        max: 80,
+	        
+	        minorTickInterval: 'auto',
+	        minorTickWidth: 1,
+	        minorTickLength: 10,
+	        minorTickPosition: 'inside',
+	        minorTickColor: '#666',
+	
+	        tickPixelInterval: 30,
+	        tickWidth: 2,
+	        tickPosition: 'inside',
+	        tickLength: 10,
+	        tickColor: '#666',
+	        labels: {
+	            step: 2,
+	            rotation: 'auto'
+	        },
+	        title: {
+	            text: '\xB0C'
+	        },
+	        plotBands: [{
+	            from: 0,
+	            to: 30,
+	            color: '#55BF3B' // green
+	        }, {
+	            from: 30,
+	            to: 50,
+	            color: '#DDDF0D' // yellow
+	        }, {
+	            from: 50,
+	            to: 80,
+	            color: '#DF5353' // red
+	        }]        
+	    },
+	
+	    series: [{
+	        name: 'Temp',
+	        data: [Math.round(<%= TempRecording.last[:temp] %>)],
+	        tooltip: {
+	            valueSuffix: ' \x80C'
+	        }
+	    }]
+
+	},
+
+	function (chart) {
+		if (!chart.renderer.forExport) {
+		    setInterval(function () {
+		        var point = chart.series[0].points[0];
+		       
+		        
+		        newVal = $.ajax({url:"/r",success:function(result){
+		        	point.update(Math.round(10*parseFloat(newVal.responseText))/10);
+		        }});
+		  		        
+		    }, 5000);
+		}
+
+	});
+});
+</script>
+
+<script>
+$(function () {
+        $('#container_line').highcharts({
+            title: {
+                text: 'Suit Temperature',
+                x: -20 //center
+            },
+            
+            yAxis: {
+                title: {
+                    text: 'Temperature (°C)'
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            tooltip: {
+                valueSuffix: '°C'
+            },
+
+            series: [{
+                name: '',
+                data: []
+            }]
+        },
+
+	function (chart) {
+		if (!chart.renderer.forExport) {
+		    setInterval(function () {
+		        var series = chart.series[0];
+		       
+		        console.log(series)
+		        newVal = $.ajax({url:"/series",success:function(result){
+		        	console.log(newVal);
+		        	var json = newVal.responseText;
+		        	console.log(json);
+		        	var obj = $.parseJSON(json);
+		        	console.log(obj);
+		        	series.setData(obj.map(Number))
+
+		        }});
+		  		        
+		    }, 1000);
+		}
+
+	}
+        );
+    });
+</script>
